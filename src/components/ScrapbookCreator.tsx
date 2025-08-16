@@ -3,6 +3,8 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { Id } from "../../convex/_generated/dataModel";
+import { ScrapbookViewer } from "./ScrapbookViewer";
+import { ScrapbookEditor } from "./ScrapbookEditor";
 
 const LAYOUT_OPTIONS = [
   { id: "grid", name: "Grid Layout", description: "Organized grid of images" },
@@ -11,6 +13,8 @@ const LAYOUT_OPTIONS = [
   { id: "magazine", name: "Magazine Style", description: "Mixed sizes and layouts" },
 ];
 
+type ViewMode = "list" | "view" | "edit";
+
 export function ScrapbookCreator() {
   const [scrapbookTitle, setScrapbookTitle] = useState("");
   const [scrapbookDescription, setScrapbookDescription] = useState("");
@@ -18,6 +22,8 @@ export function ScrapbookCreator() {
   const [selectedImages, setSelectedImages] = useState<Id<"_storage">[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [showImageSelector, setShowImageSelector] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [selectedScrapbookId, setSelectedScrapbookId] = useState<Id<"scrapbooks"> | null>(null);
 
   const transformedImages = useQuery(api.scrapbooks.getUserTransformedImages) || [];
   const myScrapbooks = useQuery(api.scrapbooks.getMyScrapbooks) || [];
@@ -76,6 +82,50 @@ export function ScrapbookCreator() {
       toast.error("Failed to generate print URL");
     }
   };
+
+  const handleViewScrapbook = (scrapbookId: Id<"scrapbooks">) => {
+    setSelectedScrapbookId(scrapbookId);
+    setViewMode("view");
+  };
+
+  const handleEditScrapbook = (scrapbookId: Id<"scrapbooks">) => {
+    setSelectedScrapbookId(scrapbookId);
+    setViewMode("edit");
+  };
+
+  const handleBackToList = () => {
+    setViewMode("list");
+    setSelectedScrapbookId(null);
+  };
+
+  const handleSaveEdit = () => {
+    setViewMode("view");
+  };
+
+  const handleEditFromView = () => {
+    setViewMode("edit");
+  };
+
+  // Handle different view modes
+  if (viewMode === "view" && selectedScrapbookId) {
+    return (
+      <ScrapbookViewer
+        scrapbookId={selectedScrapbookId}
+        onBack={handleBackToList}
+        onEdit={handleEditFromView}
+      />
+    );
+  }
+
+  if (viewMode === "edit" && selectedScrapbookId) {
+    return (
+      <ScrapbookEditor
+        scrapbookId={selectedScrapbookId}
+        onBack={handleBackToList}
+        onSave={handleSaveEdit}
+      />
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -290,13 +340,19 @@ export function ScrapbookCreator() {
                   </div>
 
                   <div className="flex gap-2 pt-3">
-                    <button className="flex-1 px-3 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors text-sm">
+                    <button
+                      onClick={() => handleViewScrapbook(scrapbook._id)}
+                      className="flex-1 px-3 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors text-sm"
+                    >
                       📖 View
                     </button>
-                    <button className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors text-sm">
+                    <button
+                      onClick={() => handleEditScrapbook(scrapbook._id)}
+                      className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors text-sm"
+                    >
                       ✏️ Edit
                     </button>
-                    <button 
+                    <button
                       onClick={() => handlePrint(scrapbook._id)}
                       className="px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors text-sm"
                     >

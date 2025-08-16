@@ -3,7 +3,13 @@ import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { toast } from "sonner";
 
-export function MyStories() {
+type Tab = "transform" | "create" | "premade" | "characters" | "mystories" | "scrapbook";
+
+interface MyStoriesProps {
+  onNavigateToTab?: (tab: Tab) => void;
+}
+
+export function MyStories({ onNavigateToTab }: MyStoriesProps) {
   const myStories = useQuery(api.stories.getMyStories) || [];
   const generatePrintUrl = useMutation(api.stories.generatePrintUrl);
 
@@ -31,10 +37,16 @@ export function MyStories() {
           <h3 className="text-xl font-semibold text-gray-700 mb-2">No Stories Yet</h3>
           <p className="text-gray-600 mb-6">Start creating your first magical story!</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all shadow-md">
+            <button
+              onClick={() => onNavigateToTab?.("create")}
+              className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all shadow-md"
+            >
               ✍️ Create New Story
             </button>
-            <button className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+            <button
+              onClick={() => onNavigateToTab?.("premade")}
+              className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
               📖 Browse Premade Stories
             </button>
           </div>

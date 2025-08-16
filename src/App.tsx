@@ -96,7 +96,7 @@ function Content({ activeTab, setActiveTab }: { activeTab: Tab; setActiveTab: (t
           {activeTab === "create" && <StoryCreator />}
           {activeTab === "premade" && <PremadeStories />}
           {activeTab === "characters" && <CharacterCreator />}
-          {activeTab === "mystories" && <MyStories />}
+          {activeTab === "mystories" && <MyStories onNavigateToTab={setActiveTab} />}
         </div>
       </Authenticated>
 

@@ -75,6 +75,69 @@ export const getUserTransformedImages = query({
   },
 });
 
+export const getScrapbook = query({
+  args: {
+    scrapbookId: v.id("scrapbooks"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const scrapbook = await ctx.db.get(args.scrapbookId);
+    if (!scrapbook || scrapbook.creatorId !== userId) {
+      throw new Error("Scrapbook not found or not authorized");
+    }
+
+    // Get URLs for all images in the scrapbook
+    const imagesWithUrls = await Promise.all(
+      scrapbook.imageIds.map(async (imageId) => {
+        const imageUrl = await ctx.storage.getUrl(imageId);
+        return {
+          id: imageId,
+          url: imageUrl,
+        };
+      })
+    );
+
+    return {
+      ...scrapbook,
+      images: imagesWithUrls,
+    };
+  },
+});
+
+export const updateScrapbook = mutation({
+  args: {
+    scrapbookId: v.id("scrapbooks"),
+    title: v.string(),
+    description: v.optional(v.string()),
+    imageIds: v.array(v.id("_storage")),
+    layout: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const scrapbook = await ctx.db.get(args.scrapbookId);
+    if (!scrapbook || scrapbook.creatorId !== userId) {
+      throw new Error("Scrapbook not found or not authorized");
+    }
+
+    await ctx.db.patch(args.scrapbookId, {
+      title: args.title,
+      description: args.description,
+      imageIds: args.imageIds,
+      layout: args.layout,
+    });
+
+    return { success: true };
+  },
+});
+
 export const generateScrapbookPrintUrl = mutation({
   args: {
     scrapbookId: v.id("scrapbooks"),
